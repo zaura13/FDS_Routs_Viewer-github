@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Routes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+
+</head>
+<body>
+    <header>
+        Flight Routes Viewer
+        <button id="toggleBtn" onclick="toggleSidebar()">☰</button>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar" id="sidebar">
+            <form method="post" enctype="multipart/form-data" action="/">
+                <label for="db_option"><strong>Select DB version:</strong></label>
+                <select name="db_option" id="db_option" onchange="this.form.submit()">
+                    {% for key in db_options %}
+                        <option value="{{ key }}" {% if selected_db == key %}selected{% endif %}>{{ key }}</option>
+                    {% endfor %}
+                </select>
+
+                <label><strong>Upload Flight File:</strong></label>
+                <input type="file" name="flightfile" accept=".txt">
+                <input type="submit" value="Upload">
+            </form>
+
+            {% if message %}
+                <p style="color: red;">{{ message }}</p>
+            {% endif %}
+
+            {% if flights %}
+            <form method="post" action="/show">
+                <details open>
+                    <summary>✈️ Select Flights</summary>
+
+                    <input type="text" id="searchInput" class="search-input" onkeyup="filterFlights()" placeholder="Search by CALLSIGN">
+
+                    <button type="button" onclick="toggleAll(true)">Select All</button>
+                    <button type="button" onclick="toggleAll(false)">Deselect All</button>
+
+                    <div class="flight-box" id="flightBox">
+                        {% for flight in flights %}
+                            <div class="flight-item">
+                                <input type="checkbox" name="selected_flights" value="{{ flight.callsign }} ({{ flight.activation_time }} - {{ flight.end_time }})" id="{{ flight.callsign }}_{{ loop.index }}">
+                                <label for="{{ flight.callsign }}_{{ loop.index }}">
+                                    {{ flight.callsign }} ({{ flight.activation_time }} - {{ flight.end_time }})
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <input type="submit" value="Show Selected Flights">
+                </details>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="map-panel" id="mapPanel">
+            {% if map_html %}
+                {{ map_html|safe }}
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function filterFlights() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const items = document.querySelectorAll('.flight-item');
+
+            items.forEach(item => {
+                const label = item.querySelector('label');
+                const text = label.textContent.toLowerCase();
+
+                item.style.display = text.includes(query) ? "block" : "none";
+            });
+        }
+
+        function toggleAll(selectAll) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="selected_flights"]');
+            checkboxes.forEach(cb => {
+                if (cb.closest('.flight-item').style.display !== "none") {
+                    cb.checked = selectAll;
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mapPanel = document.getElementById('mapPanel');
+            const toggleBtn = document.getElementById('toggleBtn');
+
+            sidebar.classList.toggle('hidden');
+            mapPanel.classList.toggle('full-width');
+
+            if (sidebar.classList.contains('hidden')) {
+                toggleBtn.textContent = '⮞';
+            } else {
+                toggleBtn.textContent = '☰';
+            }
+        }
+
+        if (window.innerWidth < 768) {
+            toggleSidebar();
+        }
+    </script>
+</body>
+</html>

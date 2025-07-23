@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Flight</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        #searchInput {
+            width: 420px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select a Flight to Display</h2>
+
+    <!-- Search Field -->
+    <input type="text" id="searchInput" placeholder="Search callsign..." onkeyup="filterOptions()">
+
+    <form method="post" action="{{ url_for('show_selected') }}">
+        <select name="selected_flight" size="10" style="width: 420px;">
+            {% for flight in flights %}
+                {% set option_value = flight.callsign ~ ' (' ~ flight.activation_time ~ ' - ' ~ flight.end_time ~ ')' %}
+                <option value="{{ option_value }}"
+                    {% if option_value == selected_flight %}selected{% endif %}>
+                    {{ flight.callsign }} — {{ flight.adep }} → {{ flight.ades }} | {{ flight.activation_time }} - {{ flight.end_time }}
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <button type="submit">Show on Map</button>
+    </form>
+
+    {% if map_html %}
+        <div class="map-panel">
+            {{ map_html|safe }}
+        </div>
+    {% endif %}
+
+    <script>
+        function filterOptions() {
+            const input = document.getElementById("searchInput");
+            const filter = input.value.toLowerCase();
+            const select = document.querySelector("select[name='selected_flight']");
+            const options = select.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const text = options[i].text.toLowerCase();
+                options[i].style.display = text.includes(filter) ? "" : "none";
+            }
+        }
+    </script>
+</body>
+</html>
